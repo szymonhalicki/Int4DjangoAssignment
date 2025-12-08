@@ -4,10 +4,6 @@ from . import models
 class OrganizationPermission:
     
     @staticmethod
-    def is_in_user_organization(request):
-        return request.organization is not None
-
-    @staticmethod
     def is_task_in_user_organization(request, task_id):
         task = get_object_or_404(models.Task, id=task_id)
         return task.organization == request.organization
