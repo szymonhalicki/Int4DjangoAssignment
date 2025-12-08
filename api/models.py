@@ -46,7 +46,7 @@ class Task(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField()
     completed = models.BooleanField(default=False)
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL)
+    assigned_to = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     deadline_datetime_with_tz = models.DateTimeField()

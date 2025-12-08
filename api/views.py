@@ -10,18 +10,18 @@ import datetime
 api = NinjaAPI()
 
 @api.post("auth/login")
-def login_user(request, payload: schemas.UserSchema):
+def login_user(request, payload: schemas.LoginSchema):
     user = authenticate(request, username=payload.username, password=payload.password)
     if user is not None:
         login(request, user)
         return {"success": True}
     else:
-        return {"error": "Invalid credentials"}
+        return 401, {"error": "Invalid credentials"}
 
-@api.get("tasks/", auth=django_auth, response=list[models.Task])
+@api.get("tasks/", auth=django_auth, response=list[schemas.TaskSchema])
 @paginate
 @login_required
-def list_tasks(request):
+def get_tasks(request):
     return models.Task.objects.filter(organization=request.user.organization).order_by(models.Task.deadline_datetime_with_tz, models.Task.priority)
 
 
@@ -83,7 +83,7 @@ def get_users(request):
         
 @api.post("users/", auth=django_auth)
 @login_required
-def register_user(request, payload: schemas.UserSchema):
+def create_user(request, payload: schemas.LoginSchema):
     if models.User.objects.filter(username=payload.username).exists():
         return {"error": "Username already exists"}
     if models.Organization.objects.get(id=payload.organization_id) is None:
