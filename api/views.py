@@ -1,32 +1,35 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from ninja import NinjaAPI
 from ninja.security import django_auth
 from ninja.pagination import paginate
 from . import models, schemas
-import datetime
+from .auth import JWTAuth
+from datetime import datetime, timedelta, timezone
+import jwt
 
 api = NinjaAPI()
 
 @api.post("auth/login")
-def login_user(request, payload: schemas.LoginSchema):
+def token_obtain(request, payload: schemas.LoginSchema):
     user = authenticate(request, username=payload.username, password=payload.password)
-    if user is not None:
-        login(request, user)
-        return {"success": True}
-    else:
+    if not user:
         return 401, {"error": "Invalid credentials"}
 
-@api.get("tasks/", auth=django_auth, response=list[schemas.TaskSchema])
+    exp = datetime.now(timezone.utc) + timedelta(hours=8)
+    token = jwt.encode({"user_id": user.id, "exp": exp}, settings.SECRET_KEY, algorithm="HS256")
+
+    return {"access": token, "token_type": "bearer", "expires_at": exp.isoformat()}
+
+@api.get("tasks/", auth=JWTAuth(), response=list[schemas.TaskSchema])
 @paginate
-@login_required
 def get_tasks(request):
-    return models.Task.objects.filter(organization=request.user.organization).order_by(models.Task.deadline_datetime_with_tz, models.Task.priority)
+    return models.Task.objects.filter(organization=request.user.organization).order_by("deadline_datetime_with_tz", "priority")
 
 
-@api.post("tasks/", auth=django_auth)
-@login_required
+@api.post("tasks/", auth=JWTAuth())
 def create_task(request, payload: schemas.TaskSchema):
     if request.user.organization != payload.assigned_to.organization:
         return 401, {"error": "User does not belong to your organization"}
@@ -47,8 +50,7 @@ def create_task(request, payload: schemas.TaskSchema):
     except Exception as e:
         return {"error": e}
     
-@api.put("tasks/{task_id}", auth=django_auth)
-@login_required
+@api.put("tasks/{task_id}", auth=JWTAuth())
 def update_task(request, task_id: int, payload: schemas.TaskSchema):
     task = get_object_or_404(models.Task, id=task_id)
     
@@ -64,8 +66,7 @@ def update_task(request, task_id: int, payload: schemas.TaskSchema):
 
     return {"success": True, "task_id": task.id}
     
-@api.delete("tasks/{task_id}", auth=django_auth)
-@login_required
+@api.delete("tasks/{task_id}", auth=JWTAuth())
 def delete_task(request, task_id: int):
     task = get_object_or_404(models.Task, id=task_id)
     
@@ -76,13 +77,11 @@ def delete_task(request, task_id: int):
     
     return {"success": True, "task_id": task.id}
 
-@api.get("users/", auth=django_auth, response=list[schemas.UserSchema])
-@login_required
+@api.get("users/", auth=JWTAuth(), response=list[schemas.UserSchema])
 def get_users(request):
     return models.User.objects.filter(organization=request.user.organization)
         
-@api.post("users/", auth=django_auth)
-@login_required
+@api.post("users/", auth=JWTAuth())
 def create_user(request, payload: schemas.LoginSchema):
     if models.User.objects.filter(username=payload.username).exists():
         return {"error": "Username already exists"}

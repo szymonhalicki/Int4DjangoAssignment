@@ -35,7 +35,7 @@ class Organization(models.Model):
         return self.name
     
 class User(AbstractUser):
-    organization = models.OneToOneField(Organization, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     
     objects = CustomUserManager()
 
