@@ -19,9 +19,9 @@ def token_obtain(request, payload: schemas.LoginSchema):
     if not user:
         return 401, {"message": "Invalid credentials"}
 
-    exp = datetime.now(timezone.utc) + timedelta(hours=8)
+    exp = datetime.now(timezone.utc) + timedelta(hours=int(settings.JWT_EXPIRATION_HOURS))
     payload = {"user_id": user.id, "exp": int(exp.timestamp())}
-    token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
     return 200, {"token": token, "expires": exp.isoformat()}
 

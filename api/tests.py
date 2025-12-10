@@ -244,13 +244,12 @@ class TaskAPITests(TestCase):
         self.assertEqual(response.status_code, 404)
     
     def test_delete_task(self):
-        task_id = self.task1.id
         response = self.client.delete(
-            f"/api/v1/tasks/{task_id}",
+            f"/api/v1/tasks/{self.task1.id}",
             HTTP_AUTHORIZATION=f"Bearer {self.token1}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(models.Task.objects.filter(id=task_id).exists())
+        self.assertFalse(models.Task.objects.filter(id=self.task1.id).exists())
     
     def test_delete_task_from_different_org(self):
         response = self.client.delete(
@@ -372,6 +371,7 @@ class UserAPITests(TestCase):
     def test_user_list_is_tenant_isolated(self):
         org2 = models.Organization.objects.create(name="B")
         u2 = User.objects.create_user(username="u2", password="p", organization=org2)
+        u2 = User.objects.create_user(username="u3", password="p", organization=org2)
         token2 = jwt.encode({"user_id": u2.id, "exp": int((timezone.now()+timedelta(hours=8)).timestamp())}, settings.SECRET_KEY, algorithm="HS256")
         response1 = self.client.get(
             "/api/v1/users/", 
@@ -381,9 +381,20 @@ class UserAPITests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {token2}")
         data1 = response1.json()
         data2 = response2.json()
+        usernames1 = [u['username'] for u in data1]
+        usernames2 = [u['username'] for u in data2]
         
         self.assertTrue(all(u['organization']['id'] == self.org.id for u in data1))
         self.assertTrue(all(u['organization']['id'] == org2.id for u in data2))
+        
+        self.assertIn('testuser', usernames1)
+        self.assertNotIn('u2', usernames1)
+        self.assertNotIn('u3', usernames1)
+        
+        self.assertIn('u2', usernames2)
+        self.assertIn('u3', usernames2) 
+        self.assertNotIn('testuser', usernames2)
+        
 
 
 class SchemaValidationTests(TestCase):
