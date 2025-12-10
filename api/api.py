@@ -31,7 +31,7 @@ def token_obtain(request, payload: schemas.LoginSchema):
 def get_tasks(request):
     return models.Task.objects.select_related('assigned_to', 'organization').all()
 
-@api.post("tasks", auth=JWTAuth(), response={200: schemas.TaskCreatedSchema, 400: schemas.MessageSchema})
+@api.post("tasks", auth=JWTAuth(), response={200: schemas.TaskCreatedSchema, 403: schemas.MessageSchema, 500: schemas.MessageSchema})
 def create_task(request, payload: schemas.TaskInputSchema):
     try:
         task = models.Task.objects.create(
@@ -45,11 +45,13 @@ def create_task(request, payload: schemas.TaskInputSchema):
 
         # task.save()
         return 200, {"task_id": task.id}
+    except ValueError as e:
+        return 403, {"message": str(e)}
     except Exception as e:
-        return 400, {"message": str(e)}
+        return 500, {"message": str(e)}
 
 
-@api.put("tasks/{task_id}", auth=JWTAuth(), response={200: schemas.TaskCreatedSchema, 400: schemas.MessageSchema})
+@api.put("tasks/{task_id}", auth=JWTAuth(), response={200: schemas.TaskCreatedSchema, 403: schemas.MessageSchema, 500: schemas.MessageSchema})
 def update_task(request, task_id: int, payload: schemas.TaskInputSchema):
     task = get_object_or_404(models.Task, id=task_id)
     
@@ -63,8 +65,10 @@ def update_task(request, task_id: int, payload: schemas.TaskInputSchema):
     try: 
         task.save()
         return 200, {"task_id": task.id}
+    except ValueError as e:
+        return 403, {"message": str(e)}
     except Exception as e:
-        return 400, {"message": str(e)}
+        return 500, {"message": str(e)}
 
 @api.delete("tasks/{task_id}", auth=JWTAuth(), response={200: schemas.MessageSchema})
 def delete_task(request, task_id: int):

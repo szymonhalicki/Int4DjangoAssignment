@@ -190,7 +190,7 @@ class TaskAPITests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {self.token1}"
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
     
     def test_create_task_without_auth(self):
         response = self.client.post(
