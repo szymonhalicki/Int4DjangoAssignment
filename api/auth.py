@@ -2,6 +2,7 @@ import jwt
 from ninja.security import HttpBearer
 from django.conf import settings
 from django.contrib.auth import get_user_model
+# from .models import User
 
 User = get_user_model()
 
@@ -14,14 +15,17 @@ class JWTAuth(HttpBearer):
             return None
         
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])       
-            user = User.objects.get(id=payload["user_id"])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])    
+            user = User.objects.get(pk=payload["user_id"])
             
             if user and user.is_active:
-                request.user = user
+                request.organization = user.organization
+                return user
             
-            return user
-            
+            return None
+        
+        except User.DoesNotExist:
+            return None
         except jwt.ExpiredSignatureError:
             return None
         except (jwt.InvalidTokenError, User.DoesNotExist):
