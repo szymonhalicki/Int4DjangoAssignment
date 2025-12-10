@@ -2,3 +2,4 @@ venv/
 htmlcov/
 .coverage
 api/__pycache__/
+core/__pycache__/
