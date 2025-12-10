@@ -89,7 +89,7 @@ coverage report -m
 ## Multi-tenancy
 
 ### Files:
-- tenant.py - Thread-local organization context management
+- tenant.py - Simple organization context management
 - middleware.py - JWT decoding and organization context setting
 - models.py - Custom managers with automatic tenant filtering
 - auth.py - Ninja authentication handler
