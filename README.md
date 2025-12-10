@@ -89,14 +89,14 @@ coverage report -m
 ## Multi-tenancy
 
 ### Files:
--tenant.py - Thread-local organization context management
--middleware.py - JWT decoding and organization context setting
--models.py - Custom managers with automatic tenant filtering
--auth.py - Ninja authentication handler
--schemas.py - Pydantic models for request/response validation
+- tenant.py - Thread-local organization context management
+- middleware.py - JWT decoding and organization context setting
+- models.py - Custom managers with automatic tenant filtering
+- auth.py - Ninja authentication handler
+- schemas.py - Pydantic models for request/response validation
 
 ### Tests:
--test_multi_tenancy - Verifies users from different orgs see only their data
--test_update_task_from_different_org - Confirms tasks from other orgs are inaccessible
--test_delete_task_from_different_org - Ensures tasks from other orgs cannot be deleted
--test_user_list_is_tenant_isolated - Verifies user list only shows current org users
+- test_multi_tenancy - Verifies users from different orgs see only their data
+- test_update_task_from_different_org - Confirms tasks from other orgs are inaccessible
+- test_delete_task_from_different_org - Ensures tasks from other orgs cannot be deleted
+- test_user_list_is_tenant_isolated - Verifies user list only shows current org users
