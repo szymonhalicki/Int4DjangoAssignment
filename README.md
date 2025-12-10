@@ -4,20 +4,19 @@ A Django REST API built with Django Ninja demonstrating multi-tenancy with data 
 
 ## Features
 
-- **Multi-Tenancy**: Complete data isolation between organizations
+- **Multi-Tenancy**: Data isolation between organizations
 - **JWT Authentication**: Token-based authentication with 8-hour expiration
 - **Task Management**: Create, read, update, delete tasks within your organization
-- **User Management**: Manage users within your organization
-- **Automatic OpenAPI Docs**: Built-in Swagger UI and ReDoc documentation at `/api/docs`
-- **Comprehensive Tests**: Full test coverage with multi-tenancy isolation tests
+- **User Management**: Can create users within given organization
+- **Automatic swagger docs**: Built-in Swagger documentation at `/api/v1/docs`
+- **Comprehensive Tests**: Large test coverage with multi-tenancy isolation tests
 
 ## Tech Stack
 
 - **Framework**: Django 5.2.9
 - **API**: Django Ninja 1.5.0
 - **Authentication**: PyJWT 2.10.1
-- **Validation**: Pydantic 2.12.5
-- **Database**: SQLite (configurable)
+- **Database**: SQLite
 - **Testing**: Django TestCase with coverage
 
 ## Local Development Setup
@@ -70,6 +69,8 @@ python manage.py runserver
 
 #### API will be available at http://localhost:8000/api/v1/
 #### OpenAPI documentation at http://localhost:8000/api/v1/docs
+
+### First login with 'api/v1/auth/login using one of the usernames and universal password: 'password123'
 
 #### Users (usernames) in seeded DB
 - janusz
