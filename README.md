@@ -37,13 +37,13 @@ cd Int4DjangoAssignment
 
 2. **Create and activate virtual environment**
    
-# Windows
+#### Windows
 ```bash
 python -m venv venv
 venv\Scripts\activate
 ```
 
-# macOS/Linux
+#### macOS/Linux
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -68,17 +68,17 @@ python manage.py seed_db
 python manage.py runserver
 ```
 
-## API will be available at http://localhost:8000/api/v1/
-## OpenAPI documentation at http://localhost:8000/api/v1/docs
+#### API will be available at http://localhost:8000/api/v1/
+#### OpenAPI documentation at http://localhost:8000/api/v1/docs
 
-### Running tests
+## Running tests
 
-## Run all:
+### Run all:
 ```bash
 python manage.py test
 ```
 
-## Coverage report
+### Coverage report
 ```bash
 coverage run --source='.' manage.py test
 
@@ -86,16 +86,16 @@ coverage report -m
 ```
 
 
-### Multi-tenancy
+## Multi-tenancy
 
-# Files:
+### Files:
 -tenant.py - Thread-local organization context management
 -middleware.py - JWT decoding and organization context setting
 -models.py - Custom managers with automatic tenant filtering
 -auth.py - Ninja authentication handler
 -schemas.py - Pydantic models for request/response validation
 
-# Tests:
+### Tests:
 -test_multi_tenancy - Verifies users from different orgs see only their data
 -test_update_task_from_different_org - Confirms tasks from other orgs are inaccessible
 -test_delete_task_from_different_org - Ensures tasks from other orgs cannot be deleted
