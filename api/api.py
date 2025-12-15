@@ -14,6 +14,7 @@ api = NinjaAPI()
 
 @api.post("auth/login", response={200: schemas.TokenSchema, 401: schemas.MessageSchema})
 def token_obtain(request, payload: schemas.LoginSchema):
+    print(f"Attempting login for: {payload.username}")
     user = authenticate(request, username=payload.username,
                         password=payload.password)
     if not user:
@@ -43,7 +44,6 @@ def create_task(request, payload: schemas.TaskInputSchema):
             assigned_to_id=payload.assigned_to,
             organization_id=request.user.organization.id)
 
-        # task.save()
         return 200, {"task_id": task.id}
     except ValueError as e:
         return 403, {"message": str(e)}
@@ -80,7 +80,7 @@ def delete_task(request, task_id: int):
 
 @api.get("users/", auth=JWTAuth(), response=list[schemas.UserSchema])
 def get_users(request):
-    return models.User.objects.all()
+    return models.User.org_objects.all()
 
 
 @api.post("users/", auth=JWTAuth(), response={200: schemas.UserCreatedSchema, 400: schemas.MessageSchema})
@@ -89,7 +89,7 @@ def create_user(request, payload: schemas.LoginSchema):
         return 400, {"message": "Username already exists"}
 
     try:
-        user = models.User.objects.create_user(
+        user = models.User.org_objects.create_user(
             username=payload.username,
             password=payload.password,
             organization=get_current_organization()

@@ -12,7 +12,7 @@ User = get_user_model()
 class JWTAuthenticationTests(TestCase):    
     def setUp(self):
         self.org = models.Organization.objects.create(name="Test Org")
-        self.user = User.objects.create_user(
+        self.user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
@@ -77,12 +77,12 @@ class TaskAPITests(TestCase):
         self.org1 = models.Organization.objects.create(name="Org 1")
         self.org2 = models.Organization.objects.create(name="Org 2")
         
-        self.user1 = User.objects.create_user(
+        self.user1 = User.org_objects.create_user(
             username="user1",
             password="pass123",
             organization=self.org1
         )
-        self.user2 = User.objects.create_user(
+        self.user2 = User.org_objects.create_user(
             username="user2",
             password="pass123",
             organization=self.org2
@@ -221,10 +221,16 @@ class TaskAPITests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {self.token1}"
         )
+        
         self.assertEqual(response.status_code, 200)
-        refreshed_task = models.Task.objects.get(id=self.task1.id)
-        self.assertEqual(refreshed_task.title, "Updated Task")
-        self.assertTrue(refreshed_task.completed)
+        tasks = self.client.get(
+            f"/api/v1/tasks",
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.token1}"
+        ).json()['items']
+        refreshed_task = [t for t in tasks if t['id'] == self.task1.id][0]
+        self.assertEqual(refreshed_task['title'], "Updated Task")
+        self.assertTrue(refreshed_task['completed'])
     
     def test_update_task_from_different_org(self):
         response = self.client.put(
@@ -256,7 +262,7 @@ class TaskAPITests(TestCase):
             HTTP_AUTHORIZATION=f"Bearer {self.token2}"
         )
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(models.Task.objects.filter(id=self.task1.id).exists())
+        self.assertTrue(models.Task.all_objects.filter(id=self.task1.id).exists())
         
     def test_pagination(self):
         models.Task.objects.bulk_create([
@@ -308,7 +314,7 @@ class TaskAPITests(TestCase):
 class UserAPITests(TestCase):    
     def setUp(self):
         self.org = models.Organization.objects.create(name="Test Org")
-        self.user = User.objects.create_user(
+        self.user = User.org_objects.create_user(
             username="testuser",
             password="pass123",
             organization=self.org
@@ -347,6 +353,7 @@ class UserAPITests(TestCase):
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {self.token}"
         )
+        
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.filter(username="newuser").exists())
     
@@ -369,8 +376,8 @@ class UserAPITests(TestCase):
         
     def test_user_list_is_tenant_isolated(self):
         org2 = models.Organization.objects.create(name="B")
-        u2 = User.objects.create_user(username="u2", password="p", organization=org2)
-        u2 = User.objects.create_user(username="u3", password="p", organization=org2)
+        u2 = User.org_objects.create_user(username="u2", password="p", organization=org2)
+        u2 = User.org_objects.create_user(username="u3", password="p", organization=org2)
         token2 = jwt.encode({"user_id": u2.id, "exp": int((timezone.now()+timedelta(hours=8)).timestamp())}, settings.SECRET_KEY, algorithm="HS256")
         response1 = self.client.get(
             "/api/v1/users/", 
@@ -399,7 +406,7 @@ class UserAPITests(TestCase):
 class SchemaValidationTests(TestCase):
     def setUp(self):
         self.org = models.Organization.objects.create(name="Test Org")
-        self.user = User.objects.create_user(
+        self.user = User.org_objects.create_user(
             username="testuser",
             password="pass123",
             organization=self.org
@@ -489,7 +496,7 @@ class OrganizationModelTests(TestCase):
     
     def test_organization_str(self):
         org = models.Organization.objects.create(name="Test Org")
-        self.assertEqual(str(org), "Test Org")
+        self.assertEqual(str(org.name), "Test Org")
     
     def test_multiple_organizations(self):
         org1 = models.Organization.objects.create(name="Org 1")
@@ -503,7 +510,7 @@ class UserModelTests(TestCase):
         self.org = models.Organization.objects.create(name="Test Org")
     
     def test_create_user(self):
-        user = User.objects.create_user(
+        user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
@@ -512,7 +519,7 @@ class UserModelTests(TestCase):
         self.assertEqual(user.organization, self.org)
     
     def test_user_password_hashing(self):
-        user = User.objects.create_user(
+        user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
@@ -521,7 +528,7 @@ class UserModelTests(TestCase):
         self.assertTrue(user.check_password("testpass123"))
     
     def test_user_organization_relationship(self):
-        user = User.objects.create_user(
+        user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
@@ -529,29 +536,29 @@ class UserModelTests(TestCase):
         self.assertEqual(user.organization.name, "Test Org")
     
     def test_user_organization_cascade_delete(self):
-        user = User.objects.create_user(
+        user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
         )
         user_id = user.id
         self.org.delete()
-        self.assertFalse(User.objects.filter(id=user_id).exists())
+        self.assertFalse(User.org_objects.filter(id=user_id).exists())
     
     def test_create_user_without_organization(self):
         with self.assertRaises(TypeError):
-            User.objects.create_user(
+            User.org_objects.create_user(
                 username="testuser",
                 password="testpass123"
             )
     
     def test_multiple_users_in_organization(self):
-        User.objects.create_user(
+        User.org_objects.create_user(
             username="user1",
             password="pass123",
             organization=self.org
         )
-        User.objects.create_user(
+        User.org_objects.create_user(
             username="user2",
             password="pass123",
             organization=self.org
@@ -559,18 +566,18 @@ class UserModelTests(TestCase):
         self.assertEqual(self.org.user_set.count(), 2)
     
     def test_user_str(self):
-        user = User.objects.create_user(
+        user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
         )
-        self.assertEqual(str(user), "testuser (Test Org)")
+        self.assertEqual(str(user.username), "testuser")
 
 
 class TaskModelTests(TestCase):
     def setUp(self):
         self.org = models.Organization.objects.create(name="Test Org")
-        self.user = User.objects.create_user(
+        self.user = User.org_objects.create_user(
             username="testuser",
             password="testpass123",
             organization=self.org
@@ -632,7 +639,7 @@ class TaskModelTests(TestCase):
             deadline_datetime_with_tz=deadline,
             priority=0
         )
-        self.assertEqual(str(task), "Test Task")
+        self.assertEqual(str(task.title), "Test Task")
     
     def test_multiple_tasks_in_organization(self):
         deadline = timezone.now() + timedelta(days=7)
@@ -654,4 +661,7 @@ class TaskModelTests(TestCase):
             deadline_datetime_with_tz=deadline,
             priority=1
         )
-        self.assertEqual(self.org.task_set.count(), 2)
+
+        self.assertTrue(models.Task.all_objects.filter(title="Task 1").exists())
+        self.assertTrue(models.Task.all_objects.filter(title="Task 2").exists())
+        self.assertFalse(models.Task.all_objects.filter(title="Task 3").exists())

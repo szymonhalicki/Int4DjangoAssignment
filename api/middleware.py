@@ -25,7 +25,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
             user_id = payload.get("user_id")
             
             if user_id:
-                request.user = User.all_objects.select_related('organization').get(
+                request.user = User.objects.select_related('organization').get(
                     pk=user_id,
                     is_active=True
                 )
