@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.http import Http404
 from ninja import NinjaAPI
 from ninja.pagination import paginate
 from . import models, schemas
@@ -70,7 +71,7 @@ def update_task(request, task_id: int, payload: schemas.TaskInputSchema):
     except Exception as e:
         return 500, {"message": str(e)}
 
-@api.delete("tasks/{task_id}", auth=JWTAuth(), response={200: schemas.MessageSchema})
+@api.delete("tasks/{task_id}", auth=JWTAuth(), response={200: schemas.MessageSchema, 404: schemas.MessageSchema, 500: schemas.MessageSchema})
 def delete_task(request, task_id: int):
     task = get_object_or_404(models.Task, id=task_id)
     task.delete()

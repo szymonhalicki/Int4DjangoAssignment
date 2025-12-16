@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 import jwt
 from django.conf import settings
-from . import models, schemas
+from . import models, schemas, tenant
 import json
 
 User = get_user_model()
@@ -255,8 +255,10 @@ class TaskAPITests(TestCase):
             f"/api/v1/tasks/{self.task1.id}",
             HTTP_AUTHORIZATION=f"Bearer {self.token2}"
         )
+
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(models.Task.objects.filter(id=self.task1.id).exists())
+        self.assertTrue(models.Task.all_objects.filter(id=self.task1.id).exists())
+        
         
     def test_pagination(self):
         models.Task.objects.bulk_create([
@@ -556,7 +558,9 @@ class UserModelTests(TestCase):
             password="pass123",
             organization=self.org
         )
-        self.assertEqual(self.org.user_set.count(), 2)
+        tenant.set_current_organization(org=self.org)
+        self.assertTrue(models.User.objects.filter(username="user1").exists())
+        self.assertTrue(models.User.objects.filter(username="user2").exists())
     
     def test_user_str(self):
         user = User.objects.create_user(
@@ -654,4 +658,6 @@ class TaskModelTests(TestCase):
             deadline_datetime_with_tz=deadline,
             priority=1
         )
-        self.assertEqual(self.org.task_set.count(), 2)
+        tenant.set_current_organization(org=self.org)
+        self.assertTrue(models.Task.objects.filter(title="Task 1").exists())
+        self.assertTrue(models.Task.objects.filter(title="Task 2").exists())
